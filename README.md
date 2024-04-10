@@ -1,5 +1,6 @@
 # NeptuneAILogger.jl
 [![CI](https://github.com/ancorso/NeptuneAILogger.jl/actions/workflows/CI.yml/badge.svg)](https://github.com/ancorso/NeptuneAILogger.jl/actions/workflows/CI.yml)
+
 Unoffical logging for [neptune.ai](https://neptune.ai) in julia. Pull requests welcome.
 
 ## Usage
