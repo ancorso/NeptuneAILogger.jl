@@ -1,0 +1,7 @@
+[deps]
+Flux = "587475ba-b771-5e3f-ad9e-33799f191a9c"
+FluxTraining = "7bf95e4d-ca32-48da-9824-f0dc5310474f"
+MLDatasets = "eb30cadb-4394-5ae3-aed4-317e484a6458"
+MLUtils = "f1d291b0-491e-4a28-83b9-f70985020b54"
+NeptuneAILogger = "edd09736-da86-44b6-b465-b626e6fb8c8b"
+ParameterSchedulers = "d7d3b36b-41b8-4d0d-a2bf-768c6151755e"
