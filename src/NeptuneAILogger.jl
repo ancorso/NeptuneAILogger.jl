@@ -66,7 +66,7 @@ end
 Create a file object that can be uploaded to Neptune.
 """
 struct File
-    path
+    path::String
 end
 export File
 
@@ -74,14 +74,16 @@ Base.getindex(logger::NeptuneLogger, key) = logger.run[key]
 
 Base.setindex!(logger::NeptuneLogger, value, key) = (logger.run[key] = value)
 
-upload(logger::NeptuneLogger, key, file) = logger.run[key].upload(file)
+upload(logger::NeptuneLogger, key, file; kwargs...) = logger.run[key].upload(file; kwargs...)
+
+upload(logger::NeptuneLogger, key, file::File; kwargs...) = logger.run[key].upload(file.path; kwargs...)
 
 function Base.push!(logger::NeptuneLogger, key, value; kwargs...)
     return logger.run[key].append(value; kwargs...)
 end
 
-function Base.push!(logger::NeptuneLogger, key, file::File)
-    return push!(logger, key, neptune.types.File(file.path))
+function Base.push!(logger::NeptuneLogger, key, file::File; kwargs...)
+    return push!(logger, key, neptune.types.File(file.path); kwargs...)
 end
 
 upload_files(logger::NeptuneLogger, key, files) = logger.run[key].upload_files(files)
@@ -90,7 +92,9 @@ track_files(logger::NeptuneLogger, key, files) = logger.run[key].track_files(fil
 
 Base.close(logger::NeptuneLogger) = logger.run.stop()
 
-export NeptuneLogger, upload, upload_files, track_files
+id(logger::NeptuneLogger) = pyconvert(String, logger.run["sys/id"].fetch())
+
+export NeptuneLogger, upload, upload_files, track_files, id
 
 struct NeptuneBackend
     logger::NeptuneLogger
