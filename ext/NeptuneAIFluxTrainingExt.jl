@@ -38,7 +38,9 @@ function FluxTraining.log_to(
 end
 
 "Log an individual image"
-function FluxTraining.log_to(backend::NeptuneBackend, image::Loggables.Image, name; kwargs...)
+function FluxTraining.log_to(
+    backend::NeptuneBackend, image::Loggables.Image, name; kwargs...
+)
     return upload(backend.logger, name, File(image.data); kwargs...)
 end
 

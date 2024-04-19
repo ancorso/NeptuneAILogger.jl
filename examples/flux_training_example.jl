@@ -8,7 +8,9 @@ using Plots
 include("callbacks.jl")
 
 # Define a configuration
-config = Dict("hidden_dims" => 32, "batch_size" => 128, "epochs" => 10, "save_dir" => "runs")
+config = Dict(
+    "hidden_dims" => 32, "batch_size" => 128, "epochs" => 10, "save_dir" => "runs"
+)
 
 # Prepare the datasets
 const LABELS = 0:9
@@ -57,8 +59,8 @@ mkpath(dir)
 neptune.logger["configuration"] = config
 
 function viz(step; filename)
-    p = heatmap(rand(10,10))
-    savefig(p, filename)
+    p = heatmap(rand(10, 10))
+    return savefig(p, filename)
 end
 
 # Define the learner with appropriate callbacks
@@ -68,14 +70,13 @@ learner = Learner(
     callbacks=[
         Scheduler(LearningRate => schedule),
         Metrics(accuracy),
-        MinValCheckpointer(joinpath(dir, "checkpoints"), logger_backend=neptune), 
+        MinValCheckpointer(joinpath(dir, "checkpoints"); logger_backend=neptune),
         LogMetrics(neptune),
         LogHyperParams(neptune),
-        GenVisuals(joinpath(dir, "visuals"), viz, freq=10, logger_backend=neptune),
+        GenVisuals(joinpath(dir, "visuals"), viz; freq=10, logger_backend=neptune),
     ],
     optimizer,
 )
-
 
 # Fit and then close
 FluxTraining.fit!(learner, config["epochs"], (trainloader, testloader))

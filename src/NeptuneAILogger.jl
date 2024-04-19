@@ -2,6 +2,7 @@ module NeptuneAILogger
 
 using PythonCall
 using Logging
+using DataStructures
 
 const neptune = PythonCall.pynew()
 
@@ -70,13 +71,39 @@ struct File
 end
 export File
 
+convert_to_valid_neptune_type(v) = v
+convert_to_valid_neptune_type(v::T) where {T<:AbstractArray} = string(v)
+convert_to_valid_neptune_type(v::T) where {T<:Tuple} = string(v)
+
+function convert_to_valid_neptune_type(v::Dict)
+    new_dict = Dict()
+    for (k, v) in v
+        new_dict[k] = convert_to_valid_neptune_type(v)
+    end
+    return new_dict
+end
+
+function convert_to_valid_neptune_type(v::OrderedDict)
+    new_dict = OrderedDict()
+    for (k, v) in v
+        new_dict[k] = convert_to_valid_neptune_type(v)
+    end
+    return new_dict
+end
+
 Base.getindex(logger::NeptuneLogger, key) = logger.run[key]
 
-Base.setindex!(logger::NeptuneLogger, value, key) = (logger.run[key] = value)
+function Base.setindex!(logger::NeptuneLogger, value, key)
+    return (logger.run[key] = convert_to_valid_neptune_type(value))
+end
 
-upload(logger::NeptuneLogger, key, file; kwargs...) = logger.run[key].upload(file; kwargs...)
+function upload(logger::NeptuneLogger, key, file; kwargs...)
+    return logger.run[key].upload(file; kwargs...)
+end
 
-upload(logger::NeptuneLogger, key, file::File; kwargs...) = logger.run[key].upload(file.path; kwargs...)
+function upload(logger::NeptuneLogger, key, file::File; kwargs...)
+    return logger.run[key].upload(file.path; kwargs...)
+end
 
 function Base.push!(logger::NeptuneLogger, key, value; kwargs...)
     return logger.run[key].append(value; kwargs...)

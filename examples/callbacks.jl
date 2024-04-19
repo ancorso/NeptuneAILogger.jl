@@ -1,9 +1,9 @@
 using FluxTraining
-import FluxTraining: Callback, EpochEnd, StepEnd, AbstractValidationPhase, Read, log_to, ValidationPhase
+import FluxTraining:
+    Callback, EpochEnd, StepEnd, AbstractValidationPhase, Read, log_to, ValidationPhase
 import FluxTraining: Loggables
 
 using DataStructures
-
 
 """
     mutable struct BestCheckpointer <: Callback
@@ -24,7 +24,9 @@ mutable struct BestCheckpointer <: Callback
     best_val
     save_current
     logger_backend
-    function BestCheckpointer(folder, metric, comparison, best_val, save_current, logger_backend)
+    function BestCheckpointer(
+        folder, metric, comparison, best_val, save_current, logger_backend
+    )
         mkpath(folder)
         return new(folder, metric, comparison, best_val, save_current, logger_backend)
     end
@@ -33,7 +35,7 @@ end
 "Return the name of the checkpoint file. Returns something like 'min_validation_Loss_checkpoint' or 'max_validation_Loss_checkpoint'"
 function best_checkpoint_name(checkpointer::BestCheckpointer)
     comp = "unknown_comparison"
-    if checkpointer.comparison == < 
+    if checkpointer.comparison == <
         comp = "min"
     elseif checkpointer.comparison == >
         comp = "max"
@@ -79,10 +81,13 @@ function MaxValCheckpointer(folder; metric=:Loss, save_current=true, logger_back
 end
 
 "Set the stateaccess of the BestCheckpointer callback"
-FluxTraining.stateaccess(::BestCheckpointer) = (model = Read(), cbstate = (metricsepoch = Read(),))
+FluxTraining.stateaccess(::BestCheckpointer) =
+    (model=Read(), cbstate=(metricsepoch=Read(),))
 
 "Saves the best and optinoally the current checkpoint and optionally logs them"
-function FluxTraining.on(::EpochEnd, phase::AbstractValidationPhase, checkpointer::BestCheckpointer, learner)
+function FluxTraining.on(
+    ::EpochEnd, phase::AbstractValidationPhase, checkpointer::BestCheckpointer, learner
+)
     metric = last(learner.cbstate.metricsepoch[phase], checkpointer.metric)[2]
 
     # Optionally save the current model as a checkpoint and optionally log it
@@ -91,7 +96,11 @@ function FluxTraining.on(::EpochEnd, phase::AbstractValidationPhase, checkpointe
         current_checkpoint = joinpath(checkpointer.folder, string(checkpoint_name, ".bson"))
         savemodel(learner.model, current_checkpoint)
         if !isnothing(checkpointer.logger_backend)
-            log_to(checkpointer.logger_backend, Loggables.File(current_checkpoint, nothing), checkpoint_name)
+            log_to(
+                checkpointer.logger_backend,
+                Loggables.File(current_checkpoint, nothing),
+                checkpoint_name,
+            )
         end
     end
 
@@ -101,7 +110,11 @@ function FluxTraining.on(::EpochEnd, phase::AbstractValidationPhase, checkpointe
         best_checkpoint = joinpath(checkpointer.folder, "best_checkpoint.bson")
         savemodel(learner.model, best_checkpoint)
         if !isnothing(checkpointer.logger_backend)
-            log_to(checkpointer.logger_backend, Loggables.File(best_checkpoint, nothing), "current_checkpoint")
+            log_to(
+                checkpointer.logger_backend,
+                Loggables.File(best_checkpoint, nothing),
+                "current_checkpoint",
+            )
         end
     end
 end
@@ -112,19 +125,26 @@ struct GenVisuals <: Callback
     vis_name
     phase
     logger_backend
-    function GenVisuals(folder, vis_fn; vis_name="visualization", phase=ValidationPhase, logger_backend=nothing, freq = 100)
+    function GenVisuals(
+        folder,
+        vis_fn;
+        vis_name="visualization",
+        phase=ValidationPhase,
+        logger_backend=nothing,
+        freq=100,
+    )
         mkpath(folder)
-        cb = new(folder, vis_fn,vis_name, phase, logger_backend)
-        isnothing(freq) ? cb : throttle(cb, StepEnd, freq = freq)
+        cb = new(folder, vis_fn, vis_name, phase, logger_backend)
+        return isnothing(freq) ? cb : throttle(cb, StepEnd; freq=freq)
     end
 end
 
 "Set the stateaccess of the GenVisuals callback"
-FluxTraining.stateaccess(::GenVisuals) = (step = Read(), cbstate = (history = Read(),))
+FluxTraining.stateaccess(::GenVisuals) = (step=Read(), cbstate=(history=Read(),))
 
 "Generates and logs visualizations"
 function FluxTraining.on(::StepEnd, phase, cb::GenVisuals, learner)
-    !(phase isa cb.phase) && return # Only run on the specified phase
+    !(phase isa cb.phase) && return nothing # Only run on the specified phase
 
     # Get the epoch/step to construct the filename
     history = learner.cbstate.history[phase]
@@ -140,6 +160,13 @@ function FluxTraining.on(::StepEnd, phase, cb::GenVisuals, learner)
 
     # Log the corresponding image
     if !isnothing(cb.logger_backend)
-        log_to(cb.logger_backend, Loggables.Image(filename), cb.vis_name, step, group = ("Step", string(typeof(phase)), "Visualizations"), name="epoch_$(epoch)_step_$(step)")
+        log_to(
+            cb.logger_backend,
+            Loggables.Image(filename),
+            cb.vis_name,
+            step;
+            group=("Step", string(typeof(phase)), "Visualizations"),
+            name="epoch_$(epoch)_step_$(step)",
+        )
     end
 end

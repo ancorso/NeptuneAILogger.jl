@@ -3,6 +3,7 @@ using Test
 using PythonCall
 using DataFrames
 using Plots
+using DataStructures
 
 NeptuneAILogger.set_api_token(NeptuneAILogger.neptune.ANONYMOUS_API_TOKEN)
 
@@ -25,6 +26,26 @@ lg["v1"] = 1.0
 # String
 lg["v2"] = "This is a test"
 @test pyconvert(String, lg["v2"].fetch()) == "This is a test"
+
+# Tuple
+lg["t10"] = (1, 2, 3)
+@test pyconvert(String, lg["t10"].fetch()) == "(1, 2, 3)"
+
+lg["t20"] = [1, 2, 3]
+@test pyconvert(String, lg["t20"].fetch()) == "[1, 2, 3]"
+
+# Dictionary
+lg["config"] = Dict("lr" => 0.1, "batch_size" => 32)
+@test pyconvert(Int, lg["config"].fetch()["batch_size"]) == 32
+@test pyconvert(Float64, lg["config"].fetch()["lr"]) == 0.1
+
+# Dictionary of different types
+lg["config2"] = Dict(
+    "ch" => [1, 2, 3], "validation_sets" => OrderedDict("lr" => 0.1, "batch_size" => 32)
+)
+@test pyconvert(String, lg["config2"].fetch()["ch"]) == "[1, 2, 3]"
+@test pyconvert(Int, lg["config2"].fetch()["validation_sets"]["batch_size"]) == 32
+@test pyconvert(Float64, lg["config2"].fetch()["validation_sets"]["lr"]) == 0.1
 
 ## Multiple values
 push!(lg, "v3", 0.1)
