@@ -16,6 +16,7 @@ FluxTraining = "7bf95e4d-ca32-48da-9824-f0dc5310474f"
 NeptuneAIFluxTrainingExt = "FluxTraining"
 
 [compat]
+DataStructures = "0.18"
 FluxTraining = "0.3"
 PackageExtensionCompat = "1"
 PythonCall = "0.9"
